@@ -1,5 +1,6 @@
 #include <ctime>
 #include <iostream>
+#include <vector>
 
 class registerclass {
  private:
@@ -8,14 +9,22 @@ class registerclass {
   float read_value;
 
  public:
-  registerclass(std::string _typeofsensor, float _read_value) {
+  registerclass() {
+    timestamp = "";
+    typeofsensor = "";
+    read_value = 0;
+  }
+
+  void register_one(std::string _timestamp, std::string _typeofsensor,
+                    float _read_value) {
     if (_typeofsensor != "AIRCUALITY" &&
         _typeofsensor != "ULTRAVIOLETRADIATION" && _typeofsensor != "TRAFFIC") {
       throw std::invalid_argument("Invalid sensor type");
     }
+    timestamp = _timestamp;
     typeofsensor = _typeofsensor;
     read_value = _read_value;
-    std::time_t result = std::time(nullptr);
-    timestamp = std::asctime(std::localtime(&result));
   }
-}
+};
+
+void register_many(vector<registerclass> &registers) {}
