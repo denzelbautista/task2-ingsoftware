@@ -1,3 +1,5 @@
 .venv/
 output/
 *.exe
+build/
+*.pyd
