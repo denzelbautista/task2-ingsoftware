@@ -2,4 +2,5 @@
 output/
 *.exe
 build/
-*.pyd
+.pyd
+__pycache__/
