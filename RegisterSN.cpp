@@ -74,9 +74,11 @@ class RegisterSN {
       return R"({"highest_accumulated_value": -1.0, "from": "-1", "to": "-1"})";
     } else {
       int index = it->second;
-      return R"({"highest_accumulated_value": )" + std::to_string(best[index]) +
-             R"(, "from": ")" + best_from[index] + R"(", "to": ")" +
-             best_to[index] + R"("})";
+      std::string result = R"({"highest_accumulated_value": )" +
+                           std::to_string(best[index]) + R"(, "from": ")" +
+                           best_from[index] + R"(", "to": ")" + best_to[index] +
+                           R"("})";
+      return result;
     }
   }
 
