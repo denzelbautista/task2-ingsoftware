@@ -21,54 +21,74 @@ class RegisterSN {
     }
   };
 
+  RegisterSN() {
+    sensor_indices = {
+        {"AIRQUALITY", 0}, {"ULTRAVIOLETRADIATION", 1}, {"TRAFFIC", 2}};
+    best = std::vector<float>(3, -1.0);
+    accumulated = std::vector<float>(3, 0.0);
+    best_from = std::vector<std::string>(3, "-1");
+    current_from = std::vector<std::string>(3, "-1");
+    best_to = std::vector<std::string>(3, "-1");
+    recording = std::vector<bool>(3, false);
+  }
+
   void register_one(const std::string& timestamp,
                     const std::string& type_of_sensor, float read) {
     data.push_back(DataSN(timestamp, type_of_sensor, read));
+
+    auto it = sensor_indices.find(type_of_sensor);
+    if (it == sensor_indices.end()) {
+      return;
+    }
+
+    int index = it->second;
+
+    if (!recording[index]) {
+      recording[index] = true;
+      current_from[index] = timestamp;
+    }
+
+    accumulated[index] += read;
+
+    if (accumulated[index] > best[index]) {
+      best[index] = accumulated[index];
+      best_from[index] = current_from[index];
+      best_to[index] = timestamp;
+    }
+
+    if (accumulated[index] <= 0) {
+      accumulated[index] = 0;
+      recording[index] = false;
+    }
   }
 
   void register_many(const std::vector<DataSN>& readings) {
     for (const auto& reading : readings) {
-      data.push_back(reading);
+      register_one(reading.timestamp, reading.type_of_sensor, reading.read);
     }
   }
 
-  std::string highest_accumulate(const std::string& type_of_sensor) {
-    float best = -1.0, accumulated = 0.0;
-    std::string best_from, best_to, current_from;
-    bool recording = false;
-
-    for (const auto& entry : data) {
-      if (entry.type_of_sensor == type_of_sensor) {
-        if (!recording) {
-          recording = true;
-          current_from = entry.timestamp;
-        }
-
-        accumulated += entry.read;
-
-        if (accumulated > best) {
-          best = accumulated;
-          best_from = current_from;
-          best_to = entry.timestamp;
-        }
-
-        if (accumulated <= 0) {
-          accumulated = 0;
-          recording = false;
-        }
-      }
-    }
-
-    if (best == -1.0) {
+  std::string highest_accumulate(const std::string& type_of_sensor) const {
+    auto it = sensor_indices.find(type_of_sensor);
+    if (it == sensor_indices.end() || best[it->second] == -1.0) {
       return R"({"highest_accumulated_value": -1.0, "from": "-1", "to": "-1"})";
     } else {
-      return R"({"highest_accumulated_value": )" + std::to_string(best) +
-             R"(, "from": ")" + best_from + R"(", "to": ")" + best_to + R"("})";
+      int index = it->second;
+      return R"({"highest_accumulated_value": )" + std::to_string(best[index]) +
+             R"(, "from": ")" + best_from[index] + R"(", "to": ")" +
+             best_to[index] + R"("})";
     }
   }
 
  private:
   std::vector<DataSN> data;
+  std::unordered_map<std::string, int> sensor_indices;
+  std::vector<float> best;
+  std::vector<float> accumulated;
+  std::vector<std::string> best_from;
+  std::vector<std::string> current_from;
+  std::vector<std::string> best_to;
+  std::vector<bool> recording;
 };
 
 // python setup.py build_ext --inplace
